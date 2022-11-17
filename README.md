@@ -3,5 +3,5 @@ Another 3D space game.
 
 A little game where you must stop fractal asteroids destroying a planet.
 
-## Attributions
+### Attributions
 https://www.solarsystemscope.com/textures/
