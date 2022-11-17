@@ -28,7 +28,7 @@
 
 #include "inc/esAux2.h"
 #include "inc/res.h"
-//#include "ncube.h"
+#include "ncube.h"
 #include "exo.h"
 #include "inner.h"
 
@@ -85,6 +85,14 @@ vec pp = {0.f, 0.f, 0.f};
 vec ppr = {0.f, 0.f, -2.0f};
 uint hits = 0;
 
+typedef struct
+{
+    vec dir, pos;
+    f32 rot, r,g,b;
+} comet;
+#define NUM_COMETS 9
+comet comets[NUM_COMETS];
+
 //*************************************
 // utility functions
 //*************************************
@@ -125,6 +133,32 @@ void doExoImpact(vec p, float f)
     }
     esRebind(GL_ARRAY_BUFFER, &mdlExo.vid, exo_vertices, sizeof(exo_vertices), GL_STATIC_DRAW);
     esRebind(GL_ARRAY_BUFFER, &mdlExo.cid, exo_colors, sizeof(exo_colors), GL_STATIC_DRAW);
+}
+void randComet(uint i)
+{
+    vRuvBT(&comets[i].pos);
+    vMulS(&comets[i].pos, comets[i].pos, 10.f);
+
+    vec dp;
+    vRuvTA(&dp);
+    vSub(&comets[i].dir, comets[i].pos, dp);
+    vNorm(&comets[i].dir);
+    vInv(&comets[i].dir);
+
+    vec of = comets[i].dir;
+    vInv(&of);
+    vMulS(&of, of, randf()*6.f);
+    vAdd(&comets[i].pos, comets[i].pos, of);
+
+    comets[i].rot = randfc();
+    comets[i].r = randfc();
+    comets[i].g = randfc();
+    comets[i].b = randfc();
+}
+void randComets()
+{
+    for(uint i = 0; i < NUM_COMETS; i++)
+        randComet(i);
 }
 
 //*************************************
@@ -190,15 +224,15 @@ void main_loop()
 
     vAdd(&ppr, ppr, pp);
 
-    const f32 pmag = vMod(ppr);
-    if(pmag < 1.14f)
+    const f32 pmod = vMod(ppr);
+    if(pmod < 1.14f)
     {
         const f32 hf = vMod(pp)*10.f;
         vec n = ppr;
         vNorm(&n);
          vReflect(&pp, pp, (vec){-n.x, -n.y, -n.z}); // better if I don't normalise pp
          vMulS(&pp, pp, 0.3f);
-        vMulS(&n, n, 1.14f - pmag);
+        vMulS(&n, n, 1.14f - pmod);
         vAdd(&ppr, ppr, n);
 
         doExoImpact((vec){-ppr.x, -ppr.y, -ppr.z}, hf);
@@ -241,24 +275,6 @@ void main_loop()
     glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
     glUniform1f(opacity_id, 1.f);
     normalmat_id = -1;
-
-    ///
-    
-    if(hits > 0)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, mdlInner.vid);
-        glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(position_id);
-
-        glBindBuffer(GL_ARRAY_BUFFER, mdlInner.cid);
-        glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(color_id);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlExo.iid);
-
-        glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (GLfloat*) &view.m[0][0]);
-        glDrawElements(GL_TRIANGLES, exo_numind, GL_UNSIGNED_INT, 0);
-    }
     
     ///
 
@@ -275,7 +291,98 @@ void main_loop()
     glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (GLfloat*) &view.m[0][0]);
     glDrawElements(GL_TRIANGLES, exo_numind, GL_UNSIGNED_INT, 0);
 
+    /// the inner wont draw now if occluded by the exo due to depth buffer
+    
+    if(hits > 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, mdlInner.vid);
+        glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(position_id);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mdlInner.cid);
+        glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(color_id);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlExo.iid);
+
+        glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (GLfloat*) &view.m[0][0]);
+        glDrawElements(GL_TRIANGLES, exo_numind, GL_UNSIGNED_INT, 0);
+    }
+
     ///
+
+    shadePhong(&position_id, &projection_id, &modelview_id, &normalmat_id, &lightpos_id, &color_id, &opacity_id);
+    glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
+    glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
+    glUniform1f(opacity_id, 0.5f);
+
+    glEnable(GL_BLEND);
+    for(uint i = 0; i < NUM_COMETS; i++)
+    {
+        if(comets[i].r == -1337){continue;}
+        
+        const f32 pi = 0.16f*dt;
+        vAdd(&comets[i].pos, comets[i].pos, (vec){comets[i].dir.x*pi,  comets[i].dir.y*pi, comets[i].dir.z*pi});
+        comets[i].rot += 0.7f*dt;
+
+        if(vMod(comets[i].pos) < 1.14f)
+        {
+            comets[i].r = -1337;
+            doExoImpact((vec){comets[i].pos.x, comets[i].pos.y, comets[i].pos.z}, 0.1f);
+            hits++;
+            randComet(i);
+            continue;
+        }
+
+        for(int j = 0; j < 8; j++)
+        {
+            const float fi = (float)j;
+            const float sc = 1.f - (1.f*(fi*0.1f));
+
+            mIdent(&model);
+            vec tp = comets[i].dir;
+            vMulS(&tp, tp, fi*0.03f);
+            vSub(&tp, comets[i].pos, tp);
+            mTranslate(&model, tp.x, tp.y, tp.z);
+            mScale(&model, sc, sc, sc);
+            mRotate(&model, comets[i].rot+(fi*0.1f), 1.f, 0.f, 0.f);
+            mRotate(&model, comets[i].rot, 0.f, 1.f, 0.f);
+
+            mMul(&modelview, &model, &view);
+            glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
+            if(normalmat_id != -1)
+            {
+                mat inverted, normalmat;
+                mIdent(&inverted);
+                mIdent(&normalmat);
+                mInvert(&inverted.m[0][0], &modelview.m[0][0]);
+                mTranspose(&normalmat, &inverted);
+                glUniformMatrix4fv(normalmat_id, 1, GL_FALSE, (GLfloat*) &normalmat.m[0][0]);
+            }
+
+            comets[i].r += randfc()*dt*0.1f;
+            comets[i].g += randfc()*dt*0.1f;
+            comets[i].b += randfc()*dt*0.1f;
+            comets[i].r += randfc()*(fi*0.007f);
+            comets[i].g += randfc()*(fi*0.007f);
+            comets[i].b += randfc()*(fi*0.007f);
+            comets[i].r = clamp(comets[i].r, -1.f, 1.f);
+            comets[i].g = clamp(comets[i].g, -1.f, 1.f);
+            comets[i].b = clamp(comets[i].b, -1.f, 1.f);
+            glUniform3f(color_id, comets[i].r, comets[i].g, comets[i].b);
+
+            glUniform1f(opacity_id, 0.5f-(fi*0.04f));
+
+            glBindBuffer(GL_ARRAY_BUFFER, mdlMenger.vid);
+            glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(position_id);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlMenger.iid);
+            glDrawElements(GL_TRIANGLES, ncube_numind, GL_UNSIGNED_INT, 0);
+        }
+    }
+    glDisable(GL_BLEND);
+
+    //
     
     glfwSwapBuffers(window);
 }
@@ -374,6 +481,7 @@ int main(int argc, char** argv)
     printf("----\n");
     printf("Argv(1): msaa\n");
     printf("F = FPS to console.\n");
+    printf("W, A, S, D, SPACE, LEFT SHIFT\n");
     printf("----\n");
 
     // init glfw
@@ -400,6 +508,9 @@ int main(int argc, char** argv)
     // set icon
     glfwSetWindowIcon(window, 1, &(GLFWimage){16, 16, (unsigned char*)&icon_image.pixel_data});
 
+    // set comets
+    randComets();
+
 //*************************************
 // projection
 //*************************************
@@ -411,9 +522,9 @@ int main(int argc, char** argv)
 //*************************************
 
     // ***** BIND MENGER *****
-    // scaleBuffer(ncube_vertices, ncube_numvert*3);
-    // esBind(GL_ARRAY_BUFFER, &mdlMenger.vid, ncube_vertices, sizeof(ncube_vertices), GL_STATIC_DRAW);
-    // esBind(GL_ELEMENT_ARRAY_BUFFER, &mdlMenger.iid, ncube_indices, sizeof(ncube_indices), GL_STATIC_DRAW);
+    scaleBuffer(ncube_vertices, ncube_numvert*3);
+    esBind(GL_ARRAY_BUFFER, &mdlMenger.vid, ncube_vertices, sizeof(ncube_vertices), GL_STATIC_DRAW);
+    esBind(GL_ELEMENT_ARRAY_BUFFER, &mdlMenger.iid, ncube_indices, sizeof(ncube_indices), GL_STATIC_DRAW);
 
     // ***** BIND INNER *****
     scaleBuffer(exo_vertices, exo_numvert*3);
@@ -444,7 +555,7 @@ int main(int argc, char** argv)
 // compile & link shader programs
 //*************************************
 
-    //makePhong();
+    makePhong();
     makeLambert2();
 
 //*************************************
