@@ -1,8 +1,6 @@
 /*
     James William Fletcher (github.com/mrbid)
         November 2022
-
-    Probably the best you will get for 360 Y axis rotation using euler angles. Subject to gimble lock at Y poles.
 */
 
 #include <math.h>
@@ -232,18 +230,28 @@ void main_loop()
 
     if(keystate[4] == 1) // SPACE
     {
+        vec vdc;
+        vCross(&vdc, vd, (vec){0.f, 1.f, 0.f});
+        vCross(&vdc, vd, vdc);
+        vec m;
+        vMulS(&m, vdc, MOVE_SPEED * dt);
         if(inverted == 0)
-            pp.y -= MOVE_SPEED * dt;
+            vAdd(&pp, pp, m);
         else
-            pp.y += MOVE_SPEED * dt;
+            vSub(&pp, pp, m);
     }
 
     if(keystate[5] == 1) // SHIFT
     {
+        vec vdc;
+        vCross(&vdc, vd, (vec){0.f, 1.f, 0.f});
+        vCross(&vdc, vd, vdc);
+        vec m;
+        vMulS(&m, vdc, MOVE_SPEED * dt);
         if(inverted == 0)
-            pp.y += MOVE_SPEED * dt;
+            vSub(&pp, pp, m);
         else
-            pp.y -= MOVE_SPEED * dt;
+            vAdd(&pp, pp, m);
     }
 
     if(brake == 1)
