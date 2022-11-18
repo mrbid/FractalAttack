@@ -19,7 +19,7 @@ architectures:
     run-on: armhf
 
 apps:
-  cubes2:
+  fractalattack:
     extensions: [gnome-3-38]
     command: fractalattack
     plugs:
@@ -31,7 +31,7 @@ apps:
     - x11
 
 parts:
-  cubes2:
+  fractalattack:
     source: https://github.com/mrbid/fractalattack
     source-type: git
     plugin: make
