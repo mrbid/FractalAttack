@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Fractal Attack
+Comment=A simple destructible planet simulation.
+StartupNotify=false
+Exec=fractalattack
+Icon=${SNAP}/meta/gui/fractalattack.png
+Terminal=false
+Type=Application
+Categories=Application;Game;Simulation;

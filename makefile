@@ -1,11 +1,11 @@
 all:
-	gcc main.c glad_gl.c -Ofast -lglfw -lm -o fat
+	gcc main.c glad_gl.c -Ofast -lglfw -lm -o fractalattack
 
 install:
-	cp fat $(DESTDIR)
+	cp fractalattack $(DESTDIR)
 
 uninstall:
-	rm $(DESTDIR)/fat
+	rm $(DESTDIR)/fractalattack
 
 clean:
-	rm fat
+	rm fractalattack

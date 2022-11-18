@@ -1,0 +1,42 @@
+name: fractalattack
+base: core20
+version: '1.0'
+summary: A simple destructible planet simulation.
+description: |
+  In this simulation you can hit the planet head-on creating dents/craters in it, or just watch the Menger Sponge comets hit into it creating craters.
+  
+  Use W,A,S,D,SPACE & LEFT SHIFT to move around.
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+    run-on: amd64
+  - build-on: arm64
+    run-on: arm64
+  - build-on: armhf
+    run-on: armhf
+
+apps:
+  cubes2:
+    extensions: [gnome-3-38]
+    command: fractalattack
+    plugs:
+    - desktop
+    - desktop-legacy
+    - gsettings
+    - opengl
+    - wayland
+    - x11
+
+parts:
+  cubes2:
+    source: https://github.com/mrbid/fractalattack
+    source-type: git
+    plugin: make
+    build-packages:
+    - libglfw3-dev
+    stage-packages:
+    - libglfw3
+    - libgles2
