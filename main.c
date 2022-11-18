@@ -9,9 +9,6 @@
 #include <string.h>
 #include <time.h>
 
-#pragma GCC diagnostic ignored "-Wunused-result"
-//#pragma GCC diagnostic ignored "-Wnull-character"
-
 #define uint GLushort
 #define sint GLshort
 #define f32 GLfloat
@@ -84,6 +81,7 @@ uint keystate[6] = {0};
 vec pp = {0.f, 0.f, 0.f};
 vec ppr = {0.f, 0.f, -2.0f};
 uint hits = 0;
+uint brake = 0;
 
 typedef struct
 {
@@ -221,6 +219,9 @@ void main_loop()
     {
         pp.y += MOVE_SPEED * dt;
     }
+
+    if(brake == 1)
+        vMulS(&pp, pp, 0.99f*(1.f-dt));
 
     vAdd(&ppr, ppr, pp);
 
@@ -406,8 +407,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             {
                 char strts[16];
                 timestamp(&strts[0]);
-                const double nfps = fc/(t-lfct);
-                printf("[%s] FPS: %g\n", strts, nfps);
+                printf("[%s] FPS: %g\n", strts, fc/(t-lfct));
                 lfct = t;
                 fc = 0;
             }
@@ -438,7 +438,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             glfwSetCursorPos(window, ww2, wh2);
             glfwGetCursorPos(window, &ww2, &wh2);
         }
+        else if(button == GLFW_MOUSE_BUTTON_RIGHT)
+            brake = 1;
     }
+    else if(action == GLFW_RELEASE)
+        brake = 0;
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height)
@@ -482,6 +486,7 @@ int main(int argc, char** argv)
     printf("Argv(1): msaa\n");
     printf("F = FPS to console.\n");
     printf("W, A, S, D, SPACE, LEFT SHIFT\n");
+    printf("Right Click to Break\n");
     printf("----\n");
 
     // init glfw
