@@ -3,7 +3,7 @@
     James William Fletcher (github.com/mrbid)
         November 2022 - esAux2.h v2.1.1
 --------------------------------------------------
-
+    
     !! Modified for; https://github.com/mrbid/FractalAttack
 
     A pretty good color converter: https://www.easyrgb.com/en/convert.php
@@ -238,7 +238,7 @@ const GLchar* v1 =
     "{\n"
         "vec4 vertPos4 = modelview * position;\n"
         "vertPos = vec3(vertPos4) / vertPos4.w;\n"
-        "if(length(position.xyz) < 0.0231)\n"
+        "if(length(position.xyz) < 0.0231)\n" // mod
         "{\n"
         "vertNorm = vec3(modelview * vec4(-normalize(position.xyz), 0.0));\n"
         "vertCol = vec3(0,1,1);\n"
@@ -249,9 +249,7 @@ const GLchar* v1 =
         "vertCol = color;\n"
         "}\n"
         "vertOpa = opacity;\n"
-        "vlightPos = vec3(0,0,0);\n"
-        //"vlightPos = lightpos;\n"
-        //"vlightPos = vec4(modelview * vec4(lightpos, 1.0)).xyz;\n" // projected into world space
+        "vlightPos = lightpos;\n"
         "gl_Position = projection * modelview * position;\n"
     "}\n";
 
@@ -370,9 +368,7 @@ const GLchar* v2 =
         "vertPos = vec3(vertPos4) / vertPos4.w;\n"
         "vertCol = color;\n"
         "vertOpa = opacity;\n"
-        //"vlightPos = lightpos;\n"
-        //"vlightPos = vec3(0,0,0);\n"
-        "vlightPos = vec4(modelview * vec4(lightpos, 1.0)).xyz;\n" // projected into world space
+        "vlightPos = lightpos;\n"
         "normalInterp = vec3(normalmat * vec4(normalize(position.xyz), 0.0));\n"
         "gl_Position = projection * modelview * vec4(position, 1.0);\n"
     "}\n";

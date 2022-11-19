@@ -25,9 +25,18 @@
 
 #include "inc/esAux2.h"
 #include "inc/res.h"
-#include "ncube.h"
-#include "exo.h"
-#include "inner.h"
+#include "assets/ncube.h"
+#include "assets/exo.h"
+#include "assets/inner.h"
+#include "assets/rock1.h"
+#include "assets/rock2.h"
+#include "assets/rock3.h"
+#include "assets/rock4.h"
+#include "assets/rock5.h"
+#include "assets/rock6.h"
+#include "assets/rock7.h"
+#include "assets/rock8.h"
+#include "assets/rock9.h"
 
 //*************************************
 // globals
@@ -47,7 +56,7 @@ double uw, uh, uw2, uh2; // normalised pixel dpi
 // render state id's
 GLint projection_id;
 GLint modelview_id;
-GLint normalmat_id = -1;
+//GLint normalmat_id = -1;
 GLint position_id;
 GLint lightpos_id;
 GLint solidcolor_id;
@@ -65,6 +74,7 @@ mat modelview;
 ESModel mdlMenger;
 ESModel mdlExo;
 ESModel mdlInner;
+ESModel mdlRock[9];
 
 // camera vars
 #define FAR_DISTANCE 10000.f
@@ -86,9 +96,9 @@ uint brake = 0;
 typedef struct
 {
     vec dir, pos;
-    f32 rot, r,g,b;
+    f32 rot, scale, speed;
 } comet;
-#define NUM_COMETS 9
+#define NUM_COMETS 64
 comet comets[NUM_COMETS];
 
 //*************************************
@@ -148,10 +158,9 @@ void randComet(uint i)
     vMulS(&of, of, randf()*6.f);
     vAdd(&comets[i].pos, comets[i].pos, of);
 
-    comets[i].rot = randfc();
-    comets[i].r = randfc();
-    comets[i].g = randfc();
-    comets[i].b = randfc();
+    comets[i].rot = esRandFloat(0.f, 300.f);
+    comets[i].scale = esRandFloat(0.01f, 0.08f);
+    comets[i].speed = esRandFloat(0.16f, 0.24f);
 }
 void randComets()
 {
@@ -323,7 +332,6 @@ void main_loop()
     glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
     glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
     glUniform1f(opacity_id, 1.f);
-    normalmat_id = -1;
     
     ///
 
@@ -363,7 +371,7 @@ void main_loop()
     // lambert
     shadeLambert(&position_id, &projection_id, &modelview_id, &lightpos_id, &color_id, &opacity_id);
     glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
-    glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
+    glUniform3f(lightpos_id, 0.f, 0.f, 0.f);
     glUniform1f(opacity_id, 1.f);
 
     // bind menger
@@ -379,87 +387,94 @@ void main_loop()
     glUniform3f(color_id, 1.f, 1.f, 0.f);
     mMul(&modelview, &model, &view);
     glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
-    if(normalmat_id != -1)
-    {
-        mat inverted, normalmat;
-        mIdent(&inverted);
-        mIdent(&normalmat);
-        mInvert(&inverted.m[0][0], &modelview.m[0][0]);
-        mTranspose(&normalmat, &inverted);
-        glUniformMatrix4fv(normalmat_id, 1, GL_FALSE, (GLfloat*) &normalmat.m[0][0]);
-    }
     glDrawElements(GL_TRIANGLES, ncube_numind, GL_UNSIGNED_INT, 0);
 
-    // phong
-    shadePhong(&position_id, &projection_id, &modelview_id, &normalmat_id, &lightpos_id, &color_id, &opacity_id);
+    // lambert
+    shadeLambert3(&position_id, &projection_id, &modelview_id, &lightpos_id, &normal_id, &color_id, &opacity_id);
     glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
-    glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
+    glUniform3f(lightpos_id, 0.f, 0.f, 0.f);
 
     // comets
-    glEnable(GL_BLEND);
+    static const uint rcs = NUM_COMETS / 9;
+    static const f32 rrcs = 1.f / (f32)rcs;
+    uint bindstate = 0;
     for(uint i = 0; i < NUM_COMETS; i++)
     {
-        if(comets[i].r == -1337){continue;}
-        
-        const f32 pi = 0.16f*dt;
+        const f32 pi = comets[i].speed*dt;
         vAdd(&comets[i].pos, comets[i].pos, (vec){comets[i].dir.x*pi,  comets[i].dir.y*pi, comets[i].dir.z*pi});
-        comets[i].rot += 0.7f*dt;
+
+        mIdent(&model);
+        mTranslate(&model, comets[i].pos.x, comets[i].pos.y, comets[i].pos.z);
 
         if(vMod(comets[i].pos) < 1.14f)
         {
-            comets[i].r = -1337;
-            doExoImpact((vec){comets[i].pos.x, comets[i].pos.y, comets[i].pos.z}, 0.1f);
+            doExoImpact((vec){comets[i].pos.x, comets[i].pos.y, comets[i].pos.z}, (comets[i].scale+(comets[i].speed*0.1f))*1.2f);
             hits++;
             randComet(i);
             continue;
         }
 
-        for(int j = 0; j < 8; j++)
+        if(comets[i].speed == 0.f)
         {
-            const float fi = (float)j;
-            const float sc = 1.f - (1.f*(fi*0.1f));
-
-            mIdent(&model);
-            vec tp = comets[i].dir;
-            vMulS(&tp, tp, fi*0.03f);
-            vSub(&tp, comets[i].pos, tp);
-            mTranslate(&model, tp.x, tp.y, tp.z);
-            mScale(&model, sc, sc, sc);
-            mRotate(&model, comets[i].rot+(fi*0.1f), 1.f, 0.f, 0.f);
-            mRotate(&model, comets[i].rot, 0.f, 1.f, 0.f);
-
-            mMul(&modelview, &model, &view);
-            glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
-            if(normalmat_id != -1)
+            comets[i].scale -= 0.03f*dt;
+            if(comets[i].scale <= 0.f)
             {
-                mat inverted, normalmat;
-                mIdent(&inverted);
-                mIdent(&normalmat);
-                mInvert(&inverted.m[0][0], &modelview.m[0][0]);
-                mTranspose(&normalmat, &inverted);
-                glUniformMatrix4fv(normalmat_id, 1, GL_FALSE, (GLfloat*) &normalmat.m[0][0]);
+                randComet(i);
+                continue;
             }
-
-            comets[i].r += randfc()*dt*0.1f;
-            comets[i].g += randfc()*dt*0.1f;
-            comets[i].b += randfc()*dt*0.1f;
-            comets[i].r += randfc()*(fi*0.007f);
-            comets[i].g += randfc()*(fi*0.007f);
-            comets[i].b += randfc()*(fi*0.007f);
-            comets[i].r = clamp(comets[i].r, -1.f, 1.f);
-            comets[i].g = clamp(comets[i].g, -1.f, 1.f);
-            comets[i].b = clamp(comets[i].b, -1.f, 1.f);
-            glUniform3f(color_id, comets[i].r, comets[i].g, comets[i].b);
-
-            glUniform1f(opacity_id, 0.5f-(fi*0.04f));
-            
-            glDrawElements(GL_TRIANGLES, ncube_numind, GL_UNSIGNED_INT, 0);
         }
-    }
-    glDisable(GL_BLEND);
 
-    //
+        const f32 cd = vDist((vec){-ppr.x, -ppr.y, -ppr.z}, comets[i].pos);
+        const f32 cs = comets[i].scale+0.03f;
+        if(cd < cs)
+        {
+            vec n = ppr;
+            vNorm(&n);
+             vReflect(&pp, pp, comets[i].dir); // better if I don't normalise pp
+             vMulS(&pp, pp, 0.3f);
+            vMulS(&n, n, cs-cd);
+            vAdd(&ppr, ppr, n);
+
+            comets[i].speed = 0.f;
+        }
+
+        const f32 mag = vMag(comets[i].dir)*comets[i].rot*0.01f*t;
+        if(comets[i].rot < 100.f)
+            mRotY(&model, mag);
+        if(comets[i].rot < 200.f)
+            mRotZ(&model, mag);
+        if(comets[i].rot < 300.f)
+            mRotX(&model, mag);
+
+        mScale(&model, comets[i].scale, comets[i].scale, comets[i].scale);
+
+        mMul(&modelview, &model, &view);
+        glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mdlRock[0].cid);
+        glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(color_id);
+
+        uint nbs = i * rrcs;
+        if(nbs > 8){nbs = 8;}
+        if(nbs != bindstate)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mdlRock[nbs].vid);
+            glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(position_id);
+
+            glBindBuffer(GL_ARRAY_BUFFER, mdlRock[nbs].nid);
+            glVertexAttribPointer(normal_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(normal_id);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlRock[nbs].iid);
+            bindstate = nbs;
+        }
+
+        glDrawElements(GL_TRIANGLES, rock1_numind, GL_UNSIGNED_SHORT, 0);
+    }
     
+    // swap
     glfwSwapBuffers(window);
 }
 
@@ -573,7 +588,7 @@ int main(int argc, char** argv)
     printf("Argv(1): msaa\n");
     printf("F = FPS to console.\n");
     printf("W, A, S, D, SPACE, LEFT SHIFT\n");
-    printf("Right Click to Break\n");
+    printf("Right Click to Brake\n");
     printf("----\n");
 
     // init glfw
@@ -643,13 +658,67 @@ int main(int argc, char** argv)
     esBind(GL_ARRAY_BUFFER, &mdlExo.cid, exo_colors, sizeof(exo_colors), GL_STATIC_DRAW);
     esBind(GL_ELEMENT_ARRAY_BUFFER, &mdlExo.iid, exo_indices, sizeof(exo_indices), GL_STATIC_DRAW);
 
+    // ***** BIND ROCK1 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[0].vid, rock1_vertices, sizeof(rock1_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[0].nid, rock1_normals, sizeof(rock1_normals), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[0].cid, rock1_colors, sizeof(rock1_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[0].iid, rock1_indices, sizeof(rock1_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK2 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[1].vid, rock2_vertices, sizeof(rock2_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[1].nid, rock2_normals, sizeof(rock2_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[1].cid, rock2_colors, sizeof(rock2_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[1].iid, rock2_indices, sizeof(rock2_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK3 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[2].vid, rock3_vertices, sizeof(rock3_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[2].nid, rock3_normals, sizeof(rock3_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[2].cid, rock3_colors, sizeof(rock3_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[2].iid, rock3_indices, sizeof(rock3_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK4 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[3].vid, rock4_vertices, sizeof(rock4_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[3].nid, rock4_normals, sizeof(rock4_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[3].cid, rock4_colors, sizeof(rock4_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[3].iid, rock4_indices, sizeof(rock4_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK5 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[4].vid, rock5_vertices, sizeof(rock5_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[4].nid, rock5_normals, sizeof(rock5_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[4].cid, rock5_colors, sizeof(rock5_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[4].iid, rock5_indices, sizeof(rock5_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK6 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[5].vid, rock6_vertices, sizeof(rock6_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[5].nid, rock6_normals, sizeof(rock6_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[5].cid, rock6_colors, sizeof(rock6_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[5].iid, rock6_indices, sizeof(rock6_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK7 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[6].vid, rock7_vertices, sizeof(rock7_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[6].nid, rock7_normals, sizeof(rock7_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[6].cid, rock7_colors, sizeof(rock7_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[6].iid, rock7_indices, sizeof(rock7_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK8 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[7].vid, rock8_vertices, sizeof(rock8_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[7].nid, rock8_normals, sizeof(rock8_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[7].cid, rock8_colors, sizeof(rock8_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[7].iid, rock8_indices, sizeof(rock8_indices), GL_STATIC_DRAW);
+
+    // ***** BIND ROCK9 *****
+    esBind(GL_ARRAY_BUFFER, &mdlRock[8].vid, rock9_vertices, sizeof(rock9_vertices), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[8].nid, rock9_normals, sizeof(rock9_normals), GL_STATIC_DRAW);
+    //esBind(GL_ARRAY_BUFFER, &mdlRock[8].cid, rock9_colors, sizeof(rock9_colors), GL_STATIC_DRAW);
+    esBind(GL_ARRAY_BUFFER, &mdlRock[8].iid, rock9_indices, sizeof(rock9_indices), GL_STATIC_DRAW);
+
 //*************************************
 // compile & link shader programs
 //*************************************
 
-    makePhong();
     makeLambert();
     makeLambert2();
+    makeLambert3();
 
 //*************************************
 // configure render options
