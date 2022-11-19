@@ -395,6 +395,10 @@ void main_loop()
     glUniform3f(lightpos_id, 0.f, 0.f, 0.f);
 
     // comets
+    glBindBuffer(GL_ARRAY_BUFFER, mdlRock[0].cid);
+    glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(color_id);
+    
     static const uint rcs = NUM_COMETS / 9;
     static const f32 rrcs = 1.f / (f32)rcs;
     uint bindstate = 0;
@@ -450,10 +454,6 @@ void main_loop()
 
         mMul(&modelview, &model, &view);
         glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
-
-        glBindBuffer(GL_ARRAY_BUFFER, mdlRock[0].cid);
-        glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(color_id);
 
         uint nbs = i * rrcs;
         if(nbs > 8){nbs = 8;}
