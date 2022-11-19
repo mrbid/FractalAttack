@@ -401,7 +401,7 @@ void main_loop()
     
     static const uint rcs = NUM_COMETS / 9;
     static const f32 rrcs = 1.f / (f32)rcs;
-    uint bindstate = 0;
+    int bindstate = -1;
     for(uint i = 0; i < NUM_COMETS; i++)
     {
         const f32 pi = comets[i].speed*dt;
