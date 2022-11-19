@@ -178,6 +178,18 @@ void main_loop()
     static vec vd;
     mGetViewDir(&vd, view);
 
+    static uint inverted = 0;
+    if(view.m[1][1] < 0.f) // could probably do some bit magic here to transfer the signed part of the view float to a 1 float to avoid the branching and turn it into a multiply op to invert the signs
+        inverted = 1;
+    else
+        inverted = 0;
+
+    static uint locked = 0;
+    if(view.m[1][1] > -0.03f && view.m[1][1] < 0.03f)
+        locked = 1;
+    else
+        locked = 0;
+
     if(keystate[2] == 1) // W
     {
         vec m;
@@ -198,7 +210,10 @@ void main_loop()
         vCross(&vdc, vd, (vec){0.f, 1.f, 0.f});
         vec m;
         vMulS(&m, vdc, MOVE_SPEED * dt);
-        vAdd(&pp, pp, m);
+        if(inverted == 0)
+            vAdd(&pp, pp, m);
+        else
+            vSub(&pp, pp, m);
     }
 
     if(keystate[1] == 1) // D
@@ -207,17 +222,36 @@ void main_loop()
         vCross(&vdc, vd, (vec){0.f, 1.f, 0.f});
         vec m;
         vMulS(&m, vdc, MOVE_SPEED * dt);
-        vSub(&pp, pp, m);
+        if(inverted == 0)
+            vSub(&pp, pp, m);
+        else
+            vAdd(&pp, pp, m);
     }
 
     if(keystate[4] == 1) // SPACE
     {
-        pp.y -= MOVE_SPEED * dt;
+        vec vdc;
+        vCross(&vdc, vd, (vec){0.f, 1.f, 0.f});
+        vCross(&vdc, vd, vdc);
+        vec m;
+        vMulS(&m, vdc, MOVE_SPEED * dt);
+        if(inverted == 0)
+            vAdd(&pp, pp, m);
+        else
+            vSub(&pp, pp, m);
     }
 
     if(keystate[5] == 1) // SHIFT
     {
-        pp.y += MOVE_SPEED * dt;
+        vec vdc;
+        vCross(&vdc, vd, (vec){0.f, 1.f, 0.f});
+        vCross(&vdc, vd, vdc);
+        vec m;
+        vMulS(&m, vdc, MOVE_SPEED * dt);
+        if(inverted == 0)
+            vSub(&pp, pp, m);
+        else
+            vAdd(&pp, pp, m);
     }
 
     if(brake == 1)
@@ -247,14 +281,20 @@ void main_loop()
     if(focus_cursor == 1)
     {
         glfwGetCursorPos(window, &x, &y);
-
-        xrot += (ww2-x)*sens;
+        
+        if(locked == 0)
+        {
+            if(inverted == 0)
+                xrot += (ww2-x)*sens;
+            else
+                xrot -= (ww2-x)*sens;
+        }
         yrot += (wh2-y)*sens;
 
-        if(yrot > d2PI)
-            yrot = d2PI;
-        if(yrot < -d2PI)
-            yrot = -d2PI;
+        // if(yrot > d2PI)
+        //     yrot = d2PI;
+        // if(yrot < -d2PI)
+        //     yrot = -d2PI;
 
         glfwSetCursorPos(window, ww2, wh2);
     }
@@ -262,7 +302,16 @@ void main_loop()
     mIdent(&view);
     mRotate(&view, yrot, 1.f, 0.f, 0.f);
     mRotate(&view, xrot, 0.f, 1.f, 0.f);
+    // mRotY(&view, yrot);
+    // mRotX(&view, xrot);
     mTranslate(&view, ppr.x, ppr.y, ppr.z);
+
+    static f32 tft = -1.3f;
+    tft += dt*0.03f;
+    const f32 ft = tft*0.5f;
+    lightpos.x = sinf(ft) * 6.3f;
+    lightpos.y = cosf(ft) * 6.3f;
+    lightpos.z = sinf(ft) * 6.3f;
 
 //*************************************
 // render
@@ -312,11 +361,42 @@ void main_loop()
 
     ///
 
+    // lambert
+    shadeLambert(&position_id, &projection_id, &modelview_id, &lightpos_id, &color_id, &opacity_id);
+    glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
+    glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
+    glUniform1f(opacity_id, 1.f);
+
+    // bind menger
+    glBindBuffer(GL_ARRAY_BUFFER, mdlMenger.vid);
+    glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(position_id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlMenger.iid);
+
+    // light source
+    mIdent(&model);
+    mTranslate(&model, lightpos.x, lightpos.y, lightpos.z);
+    mScale(&model, 3.4f, 3.4f, 3.4f);
+    glUniform3f(color_id, 1.f, 1.f, 0.f);
+    mMul(&modelview, &model, &view);
+    glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
+    if(normalmat_id != -1)
+    {
+        mat inverted, normalmat;
+        mIdent(&inverted);
+        mIdent(&normalmat);
+        mInvert(&inverted.m[0][0], &modelview.m[0][0]);
+        mTranspose(&normalmat, &inverted);
+        glUniformMatrix4fv(normalmat_id, 1, GL_FALSE, (GLfloat*) &normalmat.m[0][0]);
+    }
+    glDrawElements(GL_TRIANGLES, ncube_numind, GL_UNSIGNED_INT, 0);
+
+    // phong
     shadePhong(&position_id, &projection_id, &modelview_id, &normalmat_id, &lightpos_id, &color_id, &opacity_id);
     glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
     glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
-    glUniform1f(opacity_id, 0.5f);
 
+    // comets
     glEnable(GL_BLEND);
     for(uint i = 0; i < NUM_COMETS; i++)
     {
@@ -373,11 +453,7 @@ void main_loop()
             glUniform3f(color_id, comets[i].r, comets[i].g, comets[i].b);
 
             glUniform1f(opacity_id, 0.5f-(fi*0.04f));
-
-            glBindBuffer(GL_ARRAY_BUFFER, mdlMenger.vid);
-            glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(position_id);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlMenger.iid);
+            
             glDrawElements(GL_TRIANGLES, ncube_numind, GL_UNSIGNED_INT, 0);
         }
     }
@@ -411,6 +487,18 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
                 lfct = t;
                 fc = 0;
             }
+        }
+        else if(key == GLFW_KEY_V)
+        {
+            // view inversion
+            printf(":: %+.2f\n", view.m[1][1]);
+
+            // dump view matrix
+            printf("%+.2f %+.2f %+.2f %+.2f\n", view.m[0][0], view.m[0][1], view.m[0][2], view.m[0][3]);
+            printf("%+.2f %+.2f %+.2f %+.2f\n", view.m[1][0], view.m[1][1], view.m[1][2], view.m[1][3]);
+            printf("%+.2f %+.2f %+.2f %+.2f\n", view.m[2][0], view.m[2][1], view.m[2][2], view.m[2][3]);
+            printf("%+.2f %+.2f %+.2f %+.2f\n", view.m[3][0], view.m[3][1], view.m[3][2], view.m[3][3]);
+            printf("---\n");
         }
     }
     else if(action == GLFW_RELEASE)
@@ -561,6 +649,7 @@ int main(int argc, char** argv)
 //*************************************
 
     makePhong();
+    makeLambert();
     makeLambert2();
 
 //*************************************
