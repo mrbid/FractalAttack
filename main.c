@@ -165,7 +165,7 @@ void randComets()
 void main_loop()
 {
 //*************************************
-// time delta for interpolation
+// time delta for frame interpolation
 //*************************************
     static double lt = 0;
     dt = t-lt;
@@ -373,7 +373,7 @@ void main_loop()
     glEnableVertexAttribArray(position_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlMenger.iid);
 
-    // light source
+    // "light source" dummy object
     mIdent(&model);
     mTranslate(&model, lightpos.x, lightpos.y, lightpos.z);
     mScale(&model, 3.4f, 3.4f, 3.4f);
@@ -542,14 +542,14 @@ void window_size_callback(GLFWwindow* window, int width, int height)
     aspect = (f32)winw / (f32)winh;
     ww = winw;
     wh = winh;
-    rww = 1/ww;
-    rwh = 1/wh;
-    ww2 = ww/2;
-    wh2 = wh/2;
-    uw = (double)aspect / ww;
-    uh = 1 / wh;
-    uw2 = (double)aspect / ww2;
-    uh2 = 1 / wh2;
+    rww = 1.0/ww;
+    rwh = 1.0/wh;
+    ww2 = ww/2.0;
+    wh2 = wh/2.0;
+    uw = (double)aspect/ww;
+    uh = 1.0/wh;
+    uw2 = (double)aspect/ww2;
+    uh2 = 1.0/wh2;
 
     mIdent(&projection);
     mPerspective(&projection, 60.0f, aspect, 0.01f, FAR_DISTANCE);
