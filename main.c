@@ -420,29 +420,39 @@ void main_loop()
 
         if(comets[i].speed == 0.f)
         {
-            comets[i].scale -= 0.03f*dt;
-            if(comets[i].scale <= 0.f)
+            comets[i].dir.x -= 0.3f*dt;
+            if(comets[i].dir.x <= 0.f)
             {
                 randComet(i);
                 continue;
             }
+            glUniform1f(opacity_id, comets[i].dir.x);
+            // comets[i].scale -= 0.03f*dt;
+            // if(comets[i].scale <= 0.f)
+            // {
+            //     randComet(i);
+            //     continue;
+            // }
         }
-
-        const f32 cd = vDist((vec){-ppr.x, -ppr.y, -ppr.z}, comets[i].pos);
-        const f32 cs = comets[i].scale+0.03f;
-        if(cd < cs)
+        else
         {
-            vec n = ppr;
-            vNorm(&n);
-             vReflect(&pp, pp, comets[i].dir); // better if I don't normalise pp
-             vMulS(&pp, pp, 0.3f);
-            vMulS(&n, n, cs-cd);
-            vAdd(&ppr, ppr, n);
+            const f32 cd = vDist((vec){-ppr.x, -ppr.y, -ppr.z}, comets[i].pos);
+            const f32 cs = comets[i].scale+0.06f;
+            if(cd < cs)
+            {
+                vec n = ppr;
+                vNorm(&n);
+                vReflect(&pp, pp, comets[i].dir); // better if I don't normalise pp
+                vMulS(&pp, pp, 0.3f);
+                vMulS(&n, n, cs-cd);
+                vAdd(&ppr, ppr, n);
 
-            comets[i].speed = 0.f;
+                comets[i].speed = 0.f;
+                comets[i].dir.x = 1.f;
+            }
         }
 
-        const f32 mag = vMag(comets[i].dir)*comets[i].rot*0.01f*t;
+        const f32 mag = comets[i].rot*0.01f*t;
         if(comets[i].rot < 100.f)
             mRotY(&model, mag);
         if(comets[i].rot < 200.f)
@@ -471,7 +481,13 @@ void main_loop()
             bindstate = nbs;
         }
 
+        if(comets[i].speed <= 0.f)
+            glEnable(GL_BLEND);
+
         glDrawElements(GL_TRIANGLES, rock1_numind, GL_UNSIGNED_SHORT, 0);
+
+        if(comets[i].speed <= 0.f)
+            glDisable(GL_BLEND);
     }
     
     // swap
