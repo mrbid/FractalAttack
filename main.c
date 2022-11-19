@@ -306,9 +306,8 @@ void main_loop()
     // mRotX(&view, xrot);
     mTranslate(&view, ppr.x, ppr.y, ppr.z);
 
-    static f32 tft = -1.3f;
-    tft += dt*0.03f;
-    const f32 ft = tft*0.5f;
+    static f32 ft = 0.f;
+    ft += dt*0.03f;
     lightpos.x = sinf(ft) * 6.3f;
     lightpos.y = cosf(ft) * 6.3f;
     lightpos.z = sinf(ft) * 6.3f;
