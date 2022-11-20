@@ -49,9 +49,9 @@ f32 dt = 0;     // delta time
 double fc = 0;  // frame count
 double lfct = 0;// last frame count time
 f32 aspect;
-double x,y,lx,ly;
 double rww, ww, rwh, wh, ww2, wh2;
 double uw, uh, uw2, uh2; // normalised pixel dpi
+double x,y;
 
 // render state id's
 GLint projection_id;
@@ -80,7 +80,7 @@ ESModel mdlRock[9];
 #define FAR_DISTANCE 10000.f
 vec lightpos = {0.f, 0.f, 0.f};
 uint focus_cursor = 0;
-double sens = 0.001f;
+double sens = 0.001;
 f32 xrot = 0.f;
 f32 yrot = 0.f;
 
@@ -108,12 +108,6 @@ void timestamp(char* ts)
 {
     const time_t tt = time(0);
     strftime(ts, 16, "%H:%M:%S", localtime(&tt));
-}
-float clamp(float f, float min, float max)
-{
-    if(f > max){return max;}
-    else if(f < min){return min;}
-    return f;
 }
 void scaleBuffer(GLfloat* b, GLsizeiptr s)
 {
@@ -596,8 +590,8 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 
     glViewport(0, 0, winw, winh);
     aspect = (f32)winw / (f32)winh;
-    ww = winw;
-    wh = winh;
+    ww = (double)winw;
+    wh = (double)winh;
     rww = 1.0/ww;
     rwh = 1.0/wh;
     ww2 = ww/2.0;
