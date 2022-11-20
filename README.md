@@ -1,16 +1,16 @@
 # FractalAttack
 A little game where you can crash into the planet or the asteroids.
 
-## Snapcraft
+### Snapcraft
 https://snapcraft.io/fractalattack
 
-##WebGL
+### WebGL
 https://mrbid.github.io/eris2/
 
-## [OLD] Fractal Comets Version
+### [OLD] Fractal Comets Version
 https://github.com/mrbid/FractalAttack/tree/FractalComets
 
-## YouTube
+### YouTube
 https://www.youtube.com/watch?v=pbpDG7VXTsw
 https://www.youtube.com/watch?v=eJ0qqsFmLEA
 
