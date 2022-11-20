@@ -1,7 +1,5 @@
 # FractalAttack
-A little game where you must stop asteroids destroying a planet.
-
-At the moment you can crash into the planet or the asteroids.
+A little game where you can crash into the planet or the asteroids.
 
 **Snapcraft;** https://snapcraft.io/fractalattack<br>
 **WebGL;** https://mrbid.github.io/eris2/<br>
