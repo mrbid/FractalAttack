@@ -392,10 +392,10 @@ void main_loop()
     static const uint rcs = NUM_COMETS / 9;
     static const f32 rrcs = 1.f / (f32)rcs;
     int bindstate = -1;
+    int cbs = -1;
     for(uint i = 0; i < NUM_COMETS; i++)
     {
         // simulation
-        int cbs = -1;
         if(comets[i].speed == 0.f) // explode
         {
             if(cbs != 0)
