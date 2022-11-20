@@ -449,7 +449,7 @@ void main_loop()
 
                 comets[i].speed = 0.f;
                 comets[i].dir.x = 1.f;
-                comets[i].scale *= 2.f;
+                //comets[i].scale *= 2.f;
             }
 
             // flip to grey if red
