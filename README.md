@@ -4,7 +4,7 @@ A little game where you must stop asteroids destroying a planet.
 At the moment you can crash into the planet or the asteroids.
 
 **Snapcraft;** https://snapcraft.io/fractalattack<br>
-**WebGL;** https://mrbid.github.io/eris2/
+**WebGL;** https://mrbid.github.io/eris2/<br>
 **[OLD] Fractal Comets Version;** https://github.com/mrbid/FractalAttack/tree/FractalComets
 
 If this version does not run smoothly you will have to try the [Initial Release here](https://github.com/mrbid/FractalAttack/tree/InitialRelease) which has no comets. There is also a web version of the initial release [here](https://mrbid.github.io/eris/).
