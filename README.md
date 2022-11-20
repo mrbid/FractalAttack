@@ -4,6 +4,7 @@ A little game where you must stop fractal asteroids destroying a planet.
 At the moment you can crash into the planet or the asteroids.
 
 A build will be on snapcraft; https://snapcraft.io/fractalattack
+A recent web build with a minor bug in the asteroids; https://mrbid.github.io/eris2/
 
 If this version does not run smoothly you will have to try the [Initial Release here](https://github.com/mrbid/FractalAttack/tree/InitialRelease) which has no comets. There is also a web version of the initial release [here](https://mrbid.github.io/eris/).
 
