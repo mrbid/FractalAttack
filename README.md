@@ -1,5 +1,5 @@
 # FractalAttack
-A little game where you must stop fractal asteroids destroying a planet.
+A little game where you must stop asteroids destroying a planet.
 
 At the moment you can crash into the planet or the asteroids.
 
