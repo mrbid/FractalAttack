@@ -395,47 +395,53 @@ void main_loop()
     glUniform3f(lightpos_id, 0.f, 0.f, 0.f);
 
     // comets
-    glBindBuffer(GL_ARRAY_BUFFER, mdlRock[0].cid);
-    glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(color_id);
-    
     static const uint rcs = NUM_COMETS / 9;
     static const f32 rrcs = 1.f / (f32)rcs;
     int bindstate = -1;
     for(uint i = 0; i < NUM_COMETS; i++)
     {
-        const f32 pi = comets[i].speed*dt;
-        vAdd(&comets[i].pos, comets[i].pos, (vec){comets[i].dir.x*pi,  comets[i].dir.y*pi, comets[i].dir.z*pi});
-
-        mIdent(&model);
-        mTranslate(&model, comets[i].pos.x, comets[i].pos.y, comets[i].pos.z);
-
-        if(vMod(comets[i].pos) < 1.14f)
+        // simulation
+        int cbs = -1;
+        if(comets[i].speed == 0.f) // explode
         {
-            doExoImpact((vec){comets[i].pos.x, comets[i].pos.y, comets[i].pos.z}, (comets[i].scale+(comets[i].speed*0.1f))*1.2f);
-            hits++;
-            randComet(i);
-            continue;
-        }
+            if(cbs != 0)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, mdlRock[1].cid);
+                glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(color_id);
+                cbs = 0;
+            }
 
-        if(comets[i].speed == 0.f)
-        {
             comets[i].dir.x -= 0.3f*dt;
-            if(comets[i].dir.x <= 0.f)
+            comets[i].scale -= 0.03f*dt;
+            if(comets[i].dir.x <= 0.f || comets[i].scale <= 0.f)
             {
                 randComet(i);
                 continue;
             }
             glUniform1f(opacity_id, comets[i].dir.x);
-            // comets[i].scale -= 0.03f*dt;
-            // if(comets[i].scale <= 0.f)
-            // {
-            //     randComet(i);
-            //     continue;
-            // }
         }
-        else
+        else // detect impacts
         {
+            // increment position
+            const f32 pi = comets[i].speed*dt;
+            vAdd(&comets[i].pos, comets[i].pos, (vec){comets[i].dir.x*pi,  comets[i].dir.y*pi, comets[i].dir.z*pi});
+
+            // planet impact
+            if(vMod(comets[i].pos) < 1.14f)
+            {
+                doExoImpact((vec){comets[i].pos.x, comets[i].pos.y, comets[i].pos.z}, (comets[i].scale+(comets[i].speed*0.1f))*1.2f);
+                hits++;
+                vec fwd;
+                vMulS(&fwd, comets[i].dir, 0.03f);
+                vAdd(&comets[i].pos, comets[i].pos, fwd);
+                comets[i].speed = 0.f;
+                comets[i].dir.x = 1.f;
+                comets[i].scale *= 2.f;
+                continue;
+            }
+
+            // player impact
             const f32 cd = vDist((vec){-ppr.x, -ppr.y, -ppr.z}, comets[i].pos);
             const f32 cs = comets[i].scale+0.06f;
             if(cd < cs)
@@ -449,9 +455,24 @@ void main_loop()
 
                 comets[i].speed = 0.f;
                 comets[i].dir.x = 1.f;
+                comets[i].scale *= 2.f;
+            }
+
+            // flip to grey if red
+            if(cbs != 1)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, mdlRock[0].cid);
+                glVertexAttribPointer(color_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(color_id);
+                cbs = 1;
             }
         }
 
+        // translate comet
+        mIdent(&model);
+        mTranslate(&model, comets[i].pos.x, comets[i].pos.y, comets[i].pos.z);
+
+        // rotate comet
         const f32 mag = comets[i].rot*0.01f*t;
         if(comets[i].rot < 100.f)
             mRotY(&model, mag);
@@ -459,12 +480,15 @@ void main_loop()
             mRotZ(&model, mag);
         if(comets[i].rot < 300.f)
             mRotX(&model, mag);
-
+        
+        // scale comet
         mScale(&model, comets[i].scale, comets[i].scale, comets[i].scale);
 
+        // make modelview
         mMul(&modelview, &model, &view);
         glUniformMatrix4fv(modelview_id, 1, GL_FALSE, (f32*) &modelview.m[0][0]);
 
+        // bind one of the 8 rock models
         uint nbs = i * rrcs;
         if(nbs > 8){nbs = 8;}
         if(nbs != bindstate)
@@ -481,13 +505,15 @@ void main_loop()
             bindstate = nbs;
         }
 
+        // draw it
         if(comets[i].speed <= 0.f)
+        {
             glEnable(GL_BLEND);
-
-        glDrawElements(GL_TRIANGLES, rock1_numind, GL_UNSIGNED_SHORT, 0);
-
-        if(comets[i].speed <= 0.f)
+            glDrawElements(GL_TRIANGLES, rock1_numind, GL_UNSIGNED_SHORT, 0);
             glDisable(GL_BLEND);
+        }
+        else
+            glDrawElements(GL_TRIANGLES, rock1_numind, GL_UNSIGNED_SHORT, 0);
     }
     
     // swap
@@ -683,7 +709,17 @@ int main(int argc, char** argv)
     // ***** BIND ROCK2 *****
     esBind(GL_ARRAY_BUFFER, &mdlRock[1].vid, rock2_vertices, sizeof(rock2_vertices), GL_STATIC_DRAW);
     esBind(GL_ARRAY_BUFFER, &mdlRock[1].nid, rock2_normals, sizeof(rock2_normals), GL_STATIC_DRAW);
-    //esBind(GL_ARRAY_BUFFER, &mdlRock[1].cid, rock2_colors, sizeof(rock2_colors), GL_STATIC_DRAW);
+    s = rock2_numvert*3;
+    for(GLsizeiptr i = 0; i < s; i+=3)
+    {
+        rock2_colors[i] = randf();
+        if(rock2_colors[i] > 0.5f)
+            rock2_colors[i+1] = randf()*0.5f;
+        else
+            rock2_colors[i+1] = 0.f;
+        rock2_colors[i+2] = 0.f;
+    }
+    esBind(GL_ARRAY_BUFFER, &mdlRock[1].cid, rock2_colors, sizeof(rock2_colors), GL_STATIC_DRAW);
     esBind(GL_ARRAY_BUFFER, &mdlRock[1].iid, rock2_indices, sizeof(rock2_indices), GL_STATIC_DRAW);
 
     // ***** BIND ROCK3 *****
