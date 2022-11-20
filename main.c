@@ -314,7 +314,11 @@ void main_loop()
     shadePhong(&position_id, &projection_id, &modelview_id, &normalmat_id, &lightpos_id, &color_id, &opacity_id);
     glUniformMatrix4fv(projection_id, 1, GL_FALSE, (GLfloat*) &projection.m[0][0]);
     glUniform3f(lightpos_id, lightpos.x, lightpos.y, lightpos.z);
-    glUniform1f(opacity_id, 0.5f);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, mdlMenger.vid);
+    glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(position_id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlMenger.iid);
 
     glEnable(GL_BLEND);
     for(uint i = 0; i < NUM_COMETS; i++)
@@ -373,10 +377,6 @@ void main_loop()
 
             glUniform1f(opacity_id, 0.5f-(fi*0.04f));
 
-            glBindBuffer(GL_ARRAY_BUFFER, mdlMenger.vid);
-            glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(position_id);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mdlMenger.iid);
             glDrawElements(GL_TRIANGLES, ncube_numind, GL_UNSIGNED_INT, 0);
         }
     }
