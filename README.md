@@ -5,16 +5,16 @@ A little game where you can crash into the planet or the asteroids.
 https://snapcraft.io/fractalattack
 
 #### WebGL
-https://mrbid.github.io/eris2/
-https://mrbid.github.io/eris/
-https://mrbid.github.io/erisrot/
+- https://mrbid.github.io/eris2/
+- https://mrbid.github.io/eris/
+- https://mrbid.github.io/erisrot/
 
 #### [OLD] Fractal Comets Version
 https://github.com/mrbid/FractalAttack/tree/FractalComets
 
 #### YouTube
-https://www.youtube.com/watch?v=pbpDG7VXTsw
-https://www.youtube.com/watch?v=eJ0qqsFmLEA
+- https://www.youtube.com/watch?v=pbpDG7VXTsw
+- https://www.youtube.com/watch?v=eJ0qqsFmLEA
 
 #### Misc
 If this version does not run smoothly you will have to try the [Initial Release here](https://github.com/mrbid/FractalAttack/tree/InitialRelease) which has no comets. There is also a web version of the initial release [here](https://mrbid.github.io/eris/).
