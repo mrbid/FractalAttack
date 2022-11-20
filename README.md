@@ -1,7 +1,7 @@
 # FractalAttack
 A little game where you must stop fractal asteroids destroying a planet.
 
-I might not finish this, at the moment you can crash into the planet or just watch the Menger Sponge comets hit it.
+At the moment you can crash into the planet or the asteroids.
 
 A build will be on snapcraft; https://snapcraft.io/fractalattack
 
