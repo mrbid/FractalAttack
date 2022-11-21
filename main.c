@@ -56,7 +56,6 @@ double x,y;
 // render state id's
 GLint projection_id;
 GLint modelview_id;
-//GLint normalmat_id = -1;
 GLint position_id;
 GLint lightpos_id;
 GLint solidcolor_id;
@@ -89,7 +88,7 @@ f32 yrot = 0.f;
 #define MOVE_SPEED 0.003f
 uint keystate[6] = {0};
 vec pp = {0.f, 0.f, 0.f};
-vec ppr = {0.f, 0.f, -2.0f};
+vec ppr = {0.f, 0.f, -2.3f};
 uint hits = 0;
 uint brake = 0;
 
