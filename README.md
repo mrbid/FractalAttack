@@ -23,3 +23,5 @@ I have unlocked Y axis rotations to allow full 360+ and sample the Y axis in the
 
 ### Attributions
 https://www.solarsystemscope.com/textures/
+- https://www.solarsystemscope.com/textures/download/4k_eris_fictional.jpg
+- https://www.solarsystemscope.com/textures/download/8k_venus_surface.jpg
