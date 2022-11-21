@@ -10,8 +10,8 @@ https://snapcraft.io/fractalattack
 - https://mrbid.github.io/erisrot/
 
 #### [OLD] Fractal Comets Versions
-https://github.com/mrbid/FractalAttack/tree/FractalComets2
-https://github.com/mrbid/FractalAttack/tree/FractalComets
+- https://github.com/mrbid/FractalAttack/tree/FractalComets2
+- https://github.com/mrbid/FractalAttack/tree/FractalComets
 
 #### YouTube
 - https://www.youtube.com/watch?v=pbpDG7VXTsw
