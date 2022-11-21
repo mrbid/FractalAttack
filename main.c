@@ -115,6 +115,7 @@ void scaleBuffer(GLfloat* b, GLsizeiptr s)
 }
 void doExoImpact(vec p, float f)
 {
+    //if(f < 0.003793040058F){return;}
     GLsizeiptr s = exo_numvert*3;
     for(GLsizeiptr i = 0; i < s; i+=3)
     {
