@@ -440,16 +440,17 @@ void main_loop()
             const f32 cs = comets[i].scale+0.06f;
             if(cd < cs)
             {
+                vec n = ppr;
+                vNorm(&n);
+                vMulS(&n, n, cs-cd);
+                vAdd(&ppr, ppr, n);
+
                 vec ccd = comets[i].pos;
                 vSub(&ccd, ppr, ccd);
                 vNorm(&ccd);
 
-                vec n = ppr;
-                vNorm(&n);
-                vReflect(&pp, pp, ccd); // better if I don't normalise pp
+                vReflect(&pp, pp, ccd);
                 vMulS(&pp, pp, 0.3f);
-                vMulS(&n, n, cs-cd);
-                vAdd(&ppr, ppr, n);
 
                 comets[i].speed = 0.f;
                 comets[i].dir.x = 1.f;
