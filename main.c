@@ -285,21 +285,24 @@ void main_loop()
     {
         glfwGetCursorPos(window, &x, &y);
         
-        if(locked == 0)
+        if(x != ww2 || y != wh2)
         {
-            if(inverted == 0)
-                xrot += (ww2-x)*sens;
-            else
-                xrot -= (ww2-x)*sens;
+            if(locked == 0)
+            {
+                if(inverted == 0)
+                    xrot += (ww2-x)*sens;
+                else
+                    xrot -= (ww2-x)*sens;
+            }
+            yrot += (wh2-y)*sens;
+
+            // if(yrot > d2PI)
+            //     yrot = d2PI;
+            // if(yrot < -d2PI)
+            //     yrot = -d2PI;
+
+            glfwSetCursorPos(window, ww2, wh2);
         }
-        yrot += (wh2-y)*sens;
-
-        // if(yrot > d2PI)
-        //     yrot = d2PI;
-        // if(yrot < -d2PI)
-        //     yrot = -d2PI;
-
-        glfwSetCursorPos(window, ww2, wh2);
     }
 
     mIdent(&view);
